@@ -1,0 +1,39 @@
+name: macOS Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 显示 Swift 版本
+        run: swift --version
+
+      - name: 构建并打包 .app
+        run: ./scripts/package.sh
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: NotepadMac-macos-universal
+          path: NotepadMac.zip
+          retention-days: 14
+
+      - name: 发布 Release（仅 tag）
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: NotepadMac.zip
+          generate_release_notes: true

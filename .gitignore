@@ -1,0 +1,6 @@
+.build/
+DerivedData/
+NotepadMac.app/
+NotepadMac.zip
+.DS_Store
+*.xcuserdata
