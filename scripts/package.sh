@@ -29,7 +29,14 @@ cp Resources/Info.plist "${APP_DIR}/Contents/Info.plist"
 chmod +x "${APP_DIR}/Contents/MacOS/${APP_NAME}"
 
 echo "==> 临时签名（ad-hoc）"
-codesign --force --deep --sign - "$APP_DIR"
+# 先签主可执行文件（链接器已自带 ad-hoc 签名，这里确保一致）
+codesign --force --sign - "${APP_DIR}/Contents/MacOS/${APP_NAME}"
+# 再尝试签整个 bundle；空 bundle 结构在某些 macOS 版本上会拒绝签名，
+# 失败不影响运行（ad-hoc 签名的二进制本身即可在 Apple Silicon 上运行）
+if ! codesign --force --sign - "$APP_DIR"; then
+    echo "警告: bundle 级签名失败，继续使用二进制级 ad-hoc 签名" >&2
+fi
+codesign -dv "$APP_DIR" 2>&1 || true
 
 echo "==> 压缩为 ${APP_NAME}.zip"
 rm -f "${APP_NAME}.zip"
