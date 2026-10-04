@@ -282,7 +282,7 @@ final class EditorViewController: NSViewController {
 
 extension EditorViewController: NSTextStorageDelegate {
     func textStorage(_ textStorage: NSTextStorage,
-                     didProcessEditing editedMask: NSTextStorage.EditActions,
+                     didProcessEditing editedMask: NSTextStorageEditActions,
                      range editedRange: NSRange,
                      changeInLength delta: Int) {
         guard editedMask.contains(.editedCharacters) else { return }
