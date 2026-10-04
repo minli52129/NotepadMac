@@ -29,12 +29,14 @@ cp Resources/Info.plist "${APP_DIR}/Contents/Info.plist"
 chmod +x "${APP_DIR}/Contents/MacOS/${APP_NAME}"
 
 echo "==> 临时签名（ad-hoc）"
-# 先签主可执行文件（链接器已自带 ad-hoc 签名，这里确保一致）
-codesign --force --sign - "${APP_DIR}/Contents/MacOS/${APP_NAME}"
-# 再尝试签整个 bundle；空 bundle 结构在某些 macOS 版本上会拒绝签名，
-# 失败不影响运行（ad-hoc 签名的二进制本身即可在 Apple Silicon 上运行）
-if ! codesign --force --sign - "$APP_DIR"; then
-    echo "警告: bundle 级签名失败，继续使用二进制级 ad-hoc 签名" >&2
+# 清除扩展属性（quarantine/资源叉等常见签名干扰项）
+xattr -cr "$APP_DIR" 2>/dev/null || true
+# 链接器已为二进制自带 ad-hoc 签名，这里尽量补签 bundle；
+# 某些 macOS/codesign 版本对极简 bundle 会误报
+# "unsealed contents present in the bundle root"，故签名失败不阻塞打包
+#（ad-hoc 签名的二进制本身即可在 Apple Silicon 上运行）
+if ! codesign --force --sign - "$APP_DIR" 2>&1; then
+    echo "警告: codesign 失败，保留链接器自带的 ad-hoc 签名继续打包" >&2
 fi
 codesign -dv "$APP_DIR" 2>&1 || true
 
